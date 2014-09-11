@@ -1,3 +1,4 @@
 #! /usr/bin/env python
 
-print "Yellow"
+answer = 42 
+print (answer)

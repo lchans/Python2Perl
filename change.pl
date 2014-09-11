@@ -1,3 +1,3 @@
 #!/usr/bin/perl
-
-print "Hello" + "World", "\n";
+$answer = 42 
+print (answer), "\n";
