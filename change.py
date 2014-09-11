@@ -1,4 +1,4 @@
 #! /usr/bin/env python
 
-answer = 42 
-print (answer)
+x = 1
+while x <= 10: print x; x = x + 1

@@ -1,5 +1,4 @@
 #!/usr/bin/perl
-
 use strict; 
 use warnings;
 
@@ -9,38 +8,55 @@ my $words;
 my $line;
 my @line;
 my $name;
-my $number;
 my $variable;
+my $bracket = 0;
 
 foreach $file (<>) { 
-	@line = split ("\n", $file);
+	@line = split (/[:\n;]+/, $file);
 	foreach $line (@line) { 
 		if ($line =~ /#!/) { 
-			print(pythonVersion());
+			$line = pythonVersion($line);
 		} elsif ($line =~ /^\s*#/ || $line =~ /^\s*$/) {
-			print $line;
+			$line = "";
 		} elsif ($line =~ /print/) { 
-			convertPrint($line);
-		} elsif ($line =~ /=/) { 
-			convertAssignment ($line);
+			$line = convertPrint($line);
+		} elsif ($line =~ /=/ && $line !~ /while/) { 
+			$line = convertAssignment ($line);
+		} elsif ($line =~ /while/) { 
+			$line = convertWhile ($line);
+			$bracket= 1;
+		} if ($line =~ /\;/ && $bracket == 1) { 
+			$line =~ s/;/;\n\}/g;
+			$bracket = 0;
 		}
+		print("$line\n");
 	}
 }
 
 sub pythonVersion { 
-	return ("#!/usr/bin/perl\n");
+	$words = "#!/usr/bin/perl";
+	return $words;
 }
 
 sub convertPrint { 
-	$words = $_[0]; 
-	$words .= ', "\n";';
-	print($words);
+	$words = join ("", "\(", $_[0], ', "\n"', "\);");
+	return $words; 
 }
 
 sub convertAssignment { 
-	@words = split ("=", $_[0]);
+	@words = split ("[=]", $_[0]);
 	$name = $words[0];
 	$variable = $words[1];
-	$words = join ("", "\$", $name, "=", $variable);
-	print("$words\n");
+	if ($variable !~ /[0-9]/) {
+		$variable = join ("", "\$", $variable);
+	}
+	$words = join ("", "\$", $name, "=", $variable, ";");
+	return $words;
+}
+
+sub convertWhile { 
+	@words = split (/while/, $_[0]);
+	$name = $words[1];
+	$words = join ("", "while \(", $name, "\)", "\{");
+	return $words; 
 }
