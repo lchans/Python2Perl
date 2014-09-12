@@ -4,34 +4,46 @@ use warnings;
 
 my $file; 
 my @words;
+my @section;
+my $section;
 my $words;
 my $line;
 my @line;
 my $name;
 my $variable;
 my $bracket = 0;
+my $count = 0;
+my $tab = 0;
+my $currentTab;
 
 foreach $file (<>) { 
-	@line = split (/[:\n;]+/, $file);
+	@line = split (/[;:\n]+/, $file);
 	foreach $line (@line) { 
 		if ($line =~ /#!/) { 
 			$line = pythonVersion($line);
-		} elsif ($line =~ /^\s*#/ || $line =~ /^\s*$/) {
-			$line = "";
 		} elsif ($line =~ /print/) { 
 			$line = convertPrint($line);
+			$line .= ";";
 		} elsif ($line =~ /=/ && $line !~ /while/) { 
 			$line = convertAssignment ($line);
+			$line .= ";";
 		} elsif ($line =~ /while/) { 
 			$line = convertWhile ($line);
-			$bracket= 1;
-		} if ($line =~ /\;/ && $bracket == 1) { 
-			$line =~ s/;/;\n\}/g;
+			$currentTab = $tab;
+			$tab = $tab + 1;
+		} elsif ($line !~ /[^\t]/ && $bracket == 1) { 
+			$line = "\}";
 			$bracket = 0;
 		}
 		print("$line\n");
 	}
 }
+
+	if ($bracket == 1) { 
+		$line = "\}";
+		$bracket = 0;
+		print("$line\n");
+	}
 
 sub pythonVersion { 
 	$words = "#!/usr/bin/perl";
@@ -39,23 +51,30 @@ sub pythonVersion {
 }
 
 sub convertPrint { 
-	$words = join ("", "\(", $_[0], ', "\n"', "\);");
+	$section = $_[0];
+	$section =~ s/print//g;
+	$section = convertAssignment($section);
+	$words = join ("", "print ", "\(", $section, ', "\n"', "\)");
 	return $words; 
 }
 
 sub convertAssignment { 
-	@words = split ("[=]", $_[0]);
-	$name = $words[0];
-	$variable = $words[1];
-	if ($variable !~ /[0-9]/) {
-		$variable = join ("", "\$", $variable);
+	my $letter; 
+	@section = split (" ", $_[0]);
+	foreach $section (@section) { 
+		if ($section =~ /[a-z]+/) { 
+			$section = join("", "\$",$section);
+		}
+		$letter .= " ";
+		$letter .= $section;
 	}
-	$words = join ("", "\$", $name, "=", $variable, ";");
-	return $words;
+	return $letter;
 }
 
+
 sub convertWhile { 
-	@words = split (/while/, $_[0]);
+	$section = convertAssignment($_[0]);
+	@words = split ("while", $section);
 	$name = $words[1];
 	$words = join ("", "while \(", $name, "\)", "\{");
 	return $words; 
