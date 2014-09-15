@@ -34,8 +34,10 @@ foreach $file (<>) {
 			$currentTab = $count;
 		} if ($currentTab > $count) { 
 			$currentTab = $count;
-			print("}\n");
+			print("}");
 		}
+
+
 
 		print("$line\n");
 	}
@@ -84,6 +86,7 @@ sub printIndentation {
 	}
 
 }
+
 
 sub convertWhile { 
 	$section = convertAssignment($_[0]);
