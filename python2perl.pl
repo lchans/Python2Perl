@@ -14,11 +14,15 @@ my $variable;
 my $bracket = 0;
 my $count = 0;
 my $tab = 0;
-my $currentTab;
+my $currentTab = $tab;
 
 foreach $file (<>) { 
 	@line = split (/[;:\n]+/, $file);
 	foreach $line (@line) { 
+
+		$line =~ /^(\s*)/;
+		$count = length( $1 );
+		
 		if ($line =~ /#!/) { 
 			$line = pythonVersion($line);
 		} elsif ($line =~ /print/) { 
@@ -29,21 +33,20 @@ foreach $file (<>) {
 			$line .= ";";
 		} elsif ($line =~ /while/) { 
 			$line = convertWhile ($line);
-			$currentTab = $tab;
-			$tab = $tab + 1;
-		} elsif ($line !~ /[^\t]/ && $bracket == 1) { 
-			$line = "\}";
-			$bracket = 0;
+			$count = $count + 1;
+			$currentTab = $count;
+		} if ($currentTab > $count) { 
+			$currentTab = $count;
+			print("}");
 		}
 		print("$line\n");
 	}
 }
 
-	if ($bracket == 1) { 
-		$line = "\}";
-		$bracket = 0;
-		print("$line\n");
-	}
+ if ($currentTab == $count) { 
+	print("\}\n");
+}
+
 
 sub pythonVersion { 
 	$words = "#!/usr/bin/perl";
