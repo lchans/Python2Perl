@@ -10,19 +10,16 @@ my $words;
 my $line;
 my @line;
 my $name;
-my $variable;
-my $bracket = 0;
 my $count = 0;
-my $tab = 0;
-my $currentTab = $tab;
+my $currentTab = 0;
 
 foreach $file (<>) { 
 	@line = split (/[;:\n]+/, $file);
 	foreach $line (@line) { 
 
-		$line =~ /^(\s*)/;
-		$count = length( $1 );
-		
+		$count = countTabs($line);
+		printIndentation($currentTab);
+
 		if ($line =~ /#!/) { 
 			$line = pythonVersion($line);
 		} elsif ($line =~ /print/) { 
@@ -39,6 +36,9 @@ foreach $file (<>) {
 			$currentTab = $count;
 			print("}");
 		}
+
+
+
 		print("$line\n");
 	}
 }
@@ -68,10 +68,23 @@ sub convertAssignment {
 		if ($section =~ /[a-z]+/) { 
 			$section = join("", "\$",$section);
 		}
-		$letter .= " ";
+		$letter .= "";
 		$letter .= $section;
 	}
 	return $letter;
+}
+
+sub countTabs { 
+	$_[0] =~ /^(\s*)/;
+	$count = length( $1 );
+	return $count;
+}
+
+sub printIndentation { 
+	for (my $i = 0; $i < $_[0]; $i++) { 
+		print ("    ");
+	}
+
 }
 
 
