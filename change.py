@@ -1,4 +1,8 @@
 #!/usr/bin/python
 
-x = 1
-while x <= 10: print x; x = x + 1
+answer = 41; 
+result = 40;
+
+if answer == 41: 
+	if result == 40: 
+		answer = answer + result 

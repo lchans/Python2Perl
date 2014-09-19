@@ -13,6 +13,9 @@ my $name;
 my $count = 0;
 my $currentTab = 0;
 
+my @bracket;
+my $bracketCounter = 0;
+
 foreach $file (<>) { 
 	@line = split (/[;:\n]+/, $file);
 	foreach $line (@line) { 
@@ -25,26 +28,31 @@ foreach $file (<>) {
 		} elsif ($line =~ /print/) { 
 			$line = convertPrint($line);
 			$line .= ";";
-		} elsif ($line =~ /=/ && $line !~ /while/) { 
+		} elsif ($line =~ /=/ && $line !~ /while/ && $line !~ /if/) { 
 			$line = convertAssignment ($line);
 			$line .= ";";
 		} elsif ($line =~ /while/) { 
 			$line = convertWhile ($line);
-			$count = $count + 1;
 			$currentTab = $count;
+			$bracketCounter++;
+		} elsif ($line =~ /if/) { 
+			$line = convertIf ($line);
+			$currentTab = $count;
+			$bracketCounter++;
+			push (@bracket, "\{");
 		} if ($currentTab > $count) { 
 			$currentTab = $count;
-			print("}");
+			$bracketCounter--;
+			print("\}");
+			pop (@bracket);
 		}
-
-
-
 		print("$line\n");
 	}
 }
 
- if ($currentTab == $count) { 
-	print("\}\n");
+while ($#bracket + 1 > 0) { 
+	pop (@bracket);
+	print ("\}");
 }
 
 
@@ -67,10 +75,11 @@ sub convertAssignment {
 	foreach $section (@section) { 
 		if ($section =~ /[a-z]+/) { 
 			$section = join("", "\$",$section);
-		}
-		$letter .= "";
+		} 
+		$letter .= " ";
 		$letter .= $section;
 	}
+	$letter =~ s/(^\s*)//;
 	return $letter;
 }
 
@@ -84,7 +93,6 @@ sub printIndentation {
 	for (my $i = 0; $i < $_[0]; $i++) { 
 		print ("    ");
 	}
-
 }
 
 
@@ -93,5 +101,13 @@ sub convertWhile {
 	@words = split ("while", $section);
 	$name = $words[1];
 	$words = join ("", "while \(", $name, "\)", "\{");
+	return $words; 
+}
+
+sub convertIf { 
+	$section = convertAssignment($_[0]);
+	@words = split ("if", $section);
+	$name = $words[1];
+	$words = join ("", "if \(", $name, "\)", "\{");
 	return $words; 
 }
