@@ -66,6 +66,11 @@ foreach $file (<>) {
 			print("$line\n");
 		}
 	}
+
+	if ($count == $currentTab && $#bracket + 1 > 0) {
+		print("\}\n");
+		pop (@bracket);
+	}
 }
 
 while ($#bracket + 1 > 0) { 
@@ -119,7 +124,6 @@ sub countTabs {
 	return $count;
 	}
 	return 0;
-
 }
 
 sub printIndentation { 

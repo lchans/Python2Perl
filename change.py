@@ -1,11 +1,10 @@
 #!/usr/bin/python
-
-answer = 41
-if answer == 0: 
-	answer = answer + 1
-	print "Answer is 0"
-	print answer
-elif answer == 41:
-	print  "Answer is 41"
-else:
-	print "Undefined"
+import sys
+x = 1
+while x < 10:
+    y = 1
+    while y <= x:
+        sys.stdout.write("*")
+        y = y + 1
+    print
+    x = x + 1
