@@ -15,62 +15,75 @@ my $currentTab = 0;
 
 my @bracket;
 my $bracketCounter = 0;
+my @strings;
 
 foreach $file (<>) { 
-	$count = countTabs($line);
-	@line = split (/[;:\n]+/, $file);
+
+	@line = split (/[\n]+/, $file);
 	foreach $line (@line) { 
-		if ($line =~ /^\s*$/) {
-		} else { 
+			$count = countTabs($line);
 
-			if ($line =~ /#!/) { 
-				$line = pythonVersion($line);
-			} elsif ($line =~ /print/) { 
-				$line = convertPrint($line);
-				$line .= ";";
-			} elsif ($line =~ /=/ && $line !~ /while/ && $line !~ /if/) { 
-				$line = convertAssignment ($line);
-				$line .= ";";
-			} elsif ($line =~ /while/) { 
-				$line = convertWhile ($line);
-				$currentTab = $count;
-				push (@bracket, "\{");
-			} elsif ($line =~ /elif/) { 
-				if (defined $count && defined $currentTab 
-				&& $count <= $currentTab && $#bracket + 1 > 0) { 
-					$currentTab = $count;
-					print("\}");
-					pop (@bracket);
-				}
-				$line = convertElif ($line);
-				$currentTab = $count;
-				push (@bracket, "\{");
-			} elsif ($line =~ /^if.+/) { 
-				if (defined $count && defined $currentTab 
-				&& $count <= $currentTab && $#bracket + 1 > 0) { 
-					$currentTab = $count;
-					print("\}");
-					pop (@bracket);
-				}
-				$line = convertIf ($line);
-				$currentTab = $count;
-				push (@bracket, "\{");
-			} elsif ($line =~ /else/) { 
+			if ($count == $currentTab && $#bracket + 1 > 0) {
+				print("\} ");
 				pop (@bracket);
-				print("\}");
-				$line = convertElse ($line);
-				$currentTab = $count;
-				push (@bracket, "\{");
-			} 
+			}
 
-			print("$line\n");
+			printIndentation($count);
+
+			@strings = split (/[;:]+/, $line);
+			foreach $line (@strings) {
+			if ($line =~ /^\s*$/) {
+			} else { 
+
+				if ($line =~ /#!/) { 
+					$line = pythonVersion($line);
+				} elsif ($line =~ /print/) { 
+					$line = convertPrint($line);
+					$line .= ";";
+				} elsif ($line =~ /=/ && $line !~ /while/ && $line !~ /if/) { 
+					$line = convertAssignment ($line);
+					$line .= ";";
+				} elsif ($line =~ /while/) { 
+					$line = convertWhile ($line);
+					$currentTab = $count;
+					push (@bracket, "\{");
+				} elsif ($line =~ /elif/) { 
+					if (defined $count && defined $currentTab 
+					&& $count < $currentTab && $#bracket + 1 > 0) { 
+						$currentTab = $count;
+						print("\}");
+						pop (@bracket);
+					}
+					$line = convertElif ($line);
+					$currentTab = $count;
+					push (@bracket, "\{");
+				} elsif ($line =~ /^if.+/) { 
+					if (defined $count && defined $currentTab 
+					&& $count < $currentTab && $#bracket + 1 > 0) { 
+						$currentTab = $count;
+						print("\}");
+						pop (@bracket);
+					}
+					$line = convertIf ($line);
+					$currentTab = $count;
+					push (@bracket, "\{");
+				} elsif ($line =~ /else/) { 
+					if ($#bracket + 1 > 0) {
+						pop (@bracket);
+						print("\}");
+					}
+					$line = convertElse ($line);
+					$currentTab = $count;
+					push (@bracket, "\{");
+				} elsif ($line =~ /for/) { 
+					$line = convertFor ($line);
+				} 
+
+				print("$line\n");
+			}
 		}
 	}
 
-	if ($count == $currentTab && $#bracket + 1 > 0) {
-		print("\}\n");
-		pop (@bracket);
-	}
 }
 
 while ($#bracket + 1 > 0) { 
@@ -114,6 +127,7 @@ sub convertAssignment {
 		$letter .= $section;
 	}
 	$letter =~ s/(^\s*)//;
+
 	return $letter;
 }
 
@@ -121,7 +135,11 @@ sub countTabs {
 	if (defined $_[0]) {
 	$_[0] =~ /^(\s+)/;
 	$count = length( $1 );
+	if (defined $count) {
 	return $count;
+	} else { 
+		return 0;
+	}
 	}
 	return 0;
 }
@@ -138,7 +156,7 @@ sub convertWhile {
 	$section = convertAssignment($_[0]);
 	@words = split ("while", $section);
 	$name = $words[1];
-	$words = join ("", "while \(", $name, "\)", "\{");
+	$words = "while \($name\) \{";
 	return $words; 
 }
 
@@ -146,7 +164,7 @@ sub convertIf {
 	$section = convertAssignment($_[0]);
 	@words = split ("if", $section);
 	$name = $words[1];
-	$words = join ("", "if \(", $name, "\)", "\{");
+	$words = "if \($name\) \{";
 	return $words; 
 }
 
@@ -154,8 +172,18 @@ sub convertElif {
 	$section = convertAssignment($_[0]);
 	@words = split ("elif", $section);
 	$name = $words[1];
-	$words = join ("", "elsif \(", $name, "\)", "\{");
+	$words = "elsif \($name\) \{";
 	return $words; 
+}
+
+sub convertFor { 
+	$section = convertAssignment($_[0]);
+	$section =~ s/\(/ /g;
+	$section =~ s/\)/ /g;
+	$section =~ s/\,//g;
+	@words = split (" ", $section);
+	$words = "for \($words[1] = $words[4]\; $words[1] \< $words[5]; $words[1]\+\+ \) \{";
+	return $words;
 }
 
 sub convertElse { 

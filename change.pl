@@ -1,13 +1,11 @@
 #!/usr/bin/perl
-0import sys
-0$x = 1;
-0while ( $x < 10){
-0}
-$y = 1;
-0while ( $y <= $x){
-0}
-        sys.stdout.write("*")
-0$y = $y + 1;
-0print (, "\n");
-0$x = $x + 1;
-0
+$answer = 41;
+if ( $answer == 0) {
+    $answer = $answer + 1;
+    print ("Answer is 0", "\n");
+    print ($answer, "\n");
+} elsif ( $answer == 41) {
+    print ("Answer is 41", "\n");
+} else {
+    print ("Undefined", "\n");
+}
