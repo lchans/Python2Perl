@@ -14,6 +14,7 @@ print "\n";
 
 my $out1 = `./change.pl`;
 my $out2 = `./change.py`;
-
+print "====================== PYTHON ======================\n";
 print $out1;
+print "====================== PERL ======================\n";
 print $out2;

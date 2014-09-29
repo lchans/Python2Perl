@@ -1,10 +1,11 @@
 #!/usr/bin/perl
 $answer = 41;
- 
-$result = 40;
-if ( $answer == 41){
- 
-if ( $result == 40){
-     
-    $answer = $answer + $result;
-}}
+if ( $answer == 0){
+$answer = $answer + 1;
+print ("Answer is 0", "\n");
+print ($answer, "\n");
+}elsif ( $answer == 41){
+print ("Answer is 41", "\n");
+}else {
+print ("Undefined", "\n");
+}

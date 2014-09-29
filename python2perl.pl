@@ -17,42 +17,62 @@ my @bracket;
 my $bracketCounter = 0;
 
 foreach $file (<>) { 
+	$count = countTabs($line);
 	@line = split (/[;:\n]+/, $file);
 	foreach $line (@line) { 
+		if ($line =~ /^\s*$/) {
+		} else { 
 
-		$count = countTabs($line);
-		printIndentation($currentTab);
+			if ($line =~ /#!/) { 
+				$line = pythonVersion($line);
+			} elsif ($line =~ /print/) { 
+				$line = convertPrint($line);
+				$line .= ";";
+			} elsif ($line =~ /=/ && $line !~ /while/ && $line !~ /if/) { 
+				$line = convertAssignment ($line);
+				$line .= ";";
+			} elsif ($line =~ /while/) { 
+				$line = convertWhile ($line);
+				$currentTab = $count;
+				push (@bracket, "\{");
+			} elsif ($line =~ /elif/) { 
+				if (defined $count && defined $currentTab 
+				&& $count <= $currentTab && $#bracket + 1 > 0) { 
+					$currentTab = $count;
+					print("\}");
+					pop (@bracket);
+				}
+				$line = convertElif ($line);
+				$currentTab = $count;
+				push (@bracket, "\{");
+			} elsif ($line =~ /^if.+/) { 
+				if (defined $count && defined $currentTab 
+				&& $count <= $currentTab && $#bracket + 1 > 0) { 
+					$currentTab = $count;
+					print("\}");
+					pop (@bracket);
+				}
+				$line = convertIf ($line);
+				$currentTab = $count;
+				push (@bracket, "\{");
+			} elsif ($line =~ /else/) { 
+				pop (@bracket);
+				print("\}");
+				$line = convertElse ($line);
+				$currentTab = $count;
+				push (@bracket, "\{");
+			} 
 
-		if ($line =~ /#!/) { 
-			$line = pythonVersion($line);
-		} elsif ($line =~ /print/) { 
-			$line = convertPrint($line);
-			$line .= ";";
-		} elsif ($line =~ /=/ && $line !~ /while/ && $line !~ /if/) { 
-			$line = convertAssignment ($line);
-			$line .= ";";
-		} elsif ($line =~ /while/) { 
-			$line = convertWhile ($line);
-			$currentTab = $count;
-			$bracketCounter++;
-		} elsif ($line =~ /if/) { 
-			$line = convertIf ($line);
-			$currentTab = $count;
-			$bracketCounter++;
-			push (@bracket, "\{");
-		} if ($currentTab > $count) { 
-			$currentTab = $count;
-			$bracketCounter--;
-			print("\}");
-			pop (@bracket);
+			print("$line\n");
 		}
-		print("$line\n");
 	}
 }
 
 while ($#bracket + 1 > 0) { 
+	$count--;
+	printIndentation($count);
 	pop (@bracket);
-	print ("\}");
+	print ("\}\n");
 }
 
 
@@ -71,10 +91,19 @@ sub convertPrint {
 
 sub convertAssignment { 
 	my $letter; 
+	my $inQuote = 0;
 	@section = split (" ", $_[0]);
 	foreach $section (@section) { 
 		if ($section =~ /[a-z]+/) { 
-			$section = join("", "\$",$section);
+			if ($section =~ /\"/) {
+				if ($inQuote == 0) {
+					$inQuote = 1; 
+				} else { 
+					$inQuote = 0;
+				}
+			} if ($inQuote == 0) {
+				$section = join("", "\$",$section);
+			}
 		} 
 		$letter .= " ";
 		$letter .= $section;
@@ -84,17 +113,22 @@ sub convertAssignment {
 }
 
 sub countTabs { 
-	$_[0] =~ /^(\s*)/;
+	if (defined $_[0]) {
+	$_[0] =~ /^(\s+)/;
 	$count = length( $1 );
 	return $count;
+	}
+	return 0;
+
 }
 
 sub printIndentation { 
-	for (my $i = 0; $i < $_[0]; $i++) { 
-		print ("    ");
+	if(defined $_[0]){
+		for (my $i = 0; $i < $_[0]; $i++) { 
+			print ("    ");
+		}
 	}
 }
-
 
 sub convertWhile { 
 	$section = convertAssignment($_[0]);
@@ -109,5 +143,18 @@ sub convertIf {
 	@words = split ("if", $section);
 	$name = $words[1];
 	$words = join ("", "if \(", $name, "\)", "\{");
+	return $words; 
+}
+
+sub convertElif { 
+	$section = convertAssignment($_[0]);
+	@words = split ("elif", $section);
+	$name = $words[1];
+	$words = join ("", "elsif \(", $name, "\)", "\{");
+	return $words; 
+}
+
+sub convertElse { 
+	$words = "else \{";
 	return $words; 
 }
