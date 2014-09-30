@@ -1,19 +1,15 @@
 #!/usr/bin/perl
-$number = 5;
-if ( $number > 0) {
- if ( $number > 1) {
-  if ( $number > 2) {
-   print ("Hello!", "\n");
-  while ( $number < 10) {
-   print ($number, "\n");
-   $number = $number + 1;
-  }
+print "Enter a number: ";
+$a = <STDIN>;
+if ( $a < 0) {
+    print ('negative', "\n");
 }
- while ( $number < 13) {
-  print ($number, "\n");
-  $number = $number + 2;
- }
+elsif ( $a == 0) {
+    print ('zero', "\n");
 }
-$number = $number + 100;
-print ($number, "\n");
+elsif ( $a < 10) {
+    print ('small', "\n");
 }
+else {
+    print ('large', "\n");
+   }

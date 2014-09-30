@@ -23,7 +23,7 @@ foreach $file (<>) {
 	foreach $line (@line) { 
 			$count = countTabs($line);
 
-			if ($count < $currentTab && $#bracket + 1 > 0) {
+			if ($count <= $currentTab && $#bracket + 1 > 0) {
 				while ($currentTab + 4 > $count) {
 					printIndentation($currentTab);
 					print("\}\n");
@@ -33,8 +33,12 @@ foreach $file (<>) {
 
 			}
 			printIndentation($count);
-
+			if ($line =~ /(if|elsif|while).*(;|:)/) {
 			@strings = split (/[;:]+/, $line);
+			} else { 
+			@strings = $line;
+			}
+			
 			foreach $line (@strings) {
 			if ($line =~ /^\s*$/ || $line =~ /import/) {
 			} else { 
@@ -74,22 +78,24 @@ foreach $file (<>) {
 					$currentTab = $count;
 					push (@bracket, "\{");
 				} elsif ($line =~ /else/) { 
-					print("\}");
-					pop (@bracket);
 					$line = convertElse ($line);
 					push (@bracket, "\{");
 					$currentTab = $count;
 				} elsif ($line =~ /for/) { 
 					$line = convertFor ($line);
+					push (@bracket, "\{");
+					$currentTab = $count;
 				} elsif ($line =~ /sys.stdout.write/) {
 					$line = convertWrite ($line);
+					$line .= ";";
+				} elsif ($line =~ /^\s*break\s*$/) { 
+					$line = convertBreak($line);
 					$line .= ";";
 				}
 				print("$line\n");
 			}
 		}
 	}
-
 }
 
 while ($#bracket + 1 > 0) { 
@@ -109,6 +115,8 @@ sub convertPrint {
 	$section = $_[0];
 	$section =~ s/print//g;
 	$section = convertAssignment($section);
+	$section =~ s/\"/\'/g;
+	
 	$words = join ("", "print ", "\(", $section, ', "\n"', "\)");
 	return $words; 
 }
@@ -188,7 +196,7 @@ sub convertFor {
 	$section =~ s/\)/ /g;
 	$section =~ s/\,//g;
 	@words = split (" ", $section);
-	$words = "for \($words[1] = $words[4]\; $words[1] \< $words[5]; $words[1]\+\+ \) \{";
+	$words = "foreach $words[1] \($words[4]\.\.$words[5]\) \{";
 	return $words;
 }
 
@@ -204,6 +212,10 @@ sub convertRead {
 	@words = split (" ", $section);
 	$words = "$words[0] $words[1] \<STDIN\>";
 	return $words;
+}
+
+sub convertBreak { 
+	return "last";
 }
 
 sub convertElse { 
