@@ -1,11 +1,19 @@
 #!/usr/bin/perl
-$answer = 41;
-if ( $answer == 0) {
-    $answer = $answer + 1;
-    print ("Answer is 0", "\n");
-    print ($answer, "\n");
-} elsif ( $answer == 41) {
-    print ("Answer is 41", "\n");
-} else {
-    print ("Undefined", "\n");
+$number = 5;
+if ( $number > 0) {
+ if ( $number > 1) {
+  if ( $number > 2) {
+   print ("Hello!", "\n");
+  while ( $number < 10) {
+   print ($number, "\n");
+   $number = $number + 1;
+  }
+}
+ while ( $number < 13) {
+  print ($number, "\n");
+  $number = $number + 2;
+ }
+}
+$number = $number + 100;
+print ($number, "\n");
 }

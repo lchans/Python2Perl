@@ -23,16 +23,20 @@ foreach $file (<>) {
 	foreach $line (@line) { 
 			$count = countTabs($line);
 
-			if ($count == $currentTab && $#bracket + 1 > 0) {
-				print("\} ");
-				pop (@bracket);
-			}
+			if ($count < $currentTab && $#bracket + 1 > 0) {
+				while ($currentTab + 4 > $count) {
+					printIndentation($currentTab);
+					print("\}\n");
+					pop (@bracket);
+					$currentTab = $currentTab - 4;
+				}
 
+			}
 			printIndentation($count);
 
 			@strings = split (/[;:]+/, $line);
 			foreach $line (@strings) {
-			if ($line =~ /^\s*$/) {
+			if ($line =~ /^\s*$/ || $line =~ /import/) {
 			} else { 
 
 				if ($line =~ /#!/) { 
@@ -40,7 +44,10 @@ foreach $file (<>) {
 				} elsif ($line =~ /print/) { 
 					$line = convertPrint($line);
 					$line .= ";";
-				} elsif ($line =~ /=/ && $line !~ /while/ && $line !~ /if/) { 
+				}  elsif ($line =~ /sys.stdin.readline/) { 
+					$line = convertRead ($line);
+					$line .= ";";
+				}elsif ($line =~ /=/ && $line !~ /while/ && $line !~ /if/) { 
 					$line = convertAssignment ($line);
 					$line .= ";";
 				} elsif ($line =~ /while/) { 
@@ -50,14 +57,13 @@ foreach $file (<>) {
 				} elsif ($line =~ /elif/) { 
 					if (defined $count && defined $currentTab 
 					&& $count < $currentTab && $#bracket + 1 > 0) { 
-						$currentTab = $count;
 						print("\}");
 						pop (@bracket);
 					}
 					$line = convertElif ($line);
 					$currentTab = $count;
 					push (@bracket, "\{");
-				} elsif ($line =~ /^if.+/) { 
+				} elsif ($line =~ /if/) { 
 					if (defined $count && defined $currentTab 
 					&& $count < $currentTab && $#bracket + 1 > 0) { 
 						$currentTab = $count;
@@ -68,17 +74,17 @@ foreach $file (<>) {
 					$currentTab = $count;
 					push (@bracket, "\{");
 				} elsif ($line =~ /else/) { 
-					if ($#bracket + 1 > 0) {
-						pop (@bracket);
-						print("\}");
-					}
+					print("\}");
+					pop (@bracket);
 					$line = convertElse ($line);
-					$currentTab = $count;
 					push (@bracket, "\{");
+					$currentTab = $count;
 				} elsif ($line =~ /for/) { 
 					$line = convertFor ($line);
-				} 
-
+				} elsif ($line =~ /sys.stdout.write/) {
+					$line = convertWrite ($line);
+					$line .= ";";
+				}
 				print("$line\n");
 			}
 		}
@@ -147,7 +153,7 @@ sub countTabs {
 sub printIndentation { 
 	if(defined $_[0]){
 		for (my $i = 0; $i < $_[0]; $i++) { 
-			print ("    ");
+			print (" ");
 		}
 	}
 }
@@ -183,6 +189,20 @@ sub convertFor {
 	$section =~ s/\,//g;
 	@words = split (" ", $section);
 	$words = "for \($words[1] = $words[4]\; $words[1] \< $words[5]; $words[1]\+\+ \) \{";
+	return $words;
+}
+
+sub convertWrite {
+	$section = convertAssignment($_[0]);
+	@words = split ("\"", $section);
+	$words = "print \"$words[1]\"";
+	return $words;
+}	
+
+sub convertRead { 
+	$section = convertAssignment($_[0]);
+	@words = split (" ", $section);
+	$words = "$words[0] $words[1] \<STDIN\>";
 	return $words;
 }
 

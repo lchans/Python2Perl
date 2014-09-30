@@ -1,11 +1,15 @@
 #!/usr/bin/python
+number = 5 
 
-answer = 41
-if answer == 0: 
-	answer = answer + 1
-	print "Answer is 0"
-	print answer
-elif answer == 41:
-	print  "Answer is 41"
-else:
-	print "Undefined"
+if number > 0: 
+	if number > 1: 
+		if number > 2: 
+			print "Hello!"
+		while number < 10:
+			print number 
+			number = number + 1
+	while number < 13: 
+		print number
+		number = number + 2
+number = number + 100 
+print number
