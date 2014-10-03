@@ -1,12 +1,5 @@
 #!/usr/bin/python
-import sys
-sys.stdout.write("Enter a number: ")
-a = int(sys.stdin.readline())
-if a < 0:
-    print "negative"
-elif a == 0:
-    print "zero"
-elif a < 10:
-    print "small"
-else:
-    print "large"
+i = 5
+ii = 10
+if i == 5 and ii == 10:
+      print "i is 5 and ii is 10"
