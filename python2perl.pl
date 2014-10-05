@@ -36,11 +36,9 @@ foreach $file (<>) {
 
 			}
 			printIndentation($count);
-			if ($line =~ /(if|elsif|while).*(;|:)/) {
+			
 			@strings = split (/[;:]+/, $line);
-			} else { 
-			@strings = $line;
-			}
+			
 			
 			foreach $line (@strings) {
 			if ($line =~ /^\s*$/ || $line =~ /import/) {
@@ -57,7 +55,8 @@ foreach $file (<>) {
 				}  elsif ($line =~ /sys.stdin.readline/) { 
 					$line = convertRead ($line);
 					$line .= ";";
-				}elsif ($line =~ /=/ && $line !~ /(\s+|^)while\s+/ && $line !~ /(\s+|^)if\s+/) { 
+				}elsif ($line =~ /=/ && $line !~ /(\s+|^)while\s+/ 
+					&& $line !~ /(\s+|^)if\s+/ && $line !~ /\belif\b/) { 
 					$line = convertAssignment ($line);
 					$line .= ";";
 				} elsif ($line =~ /(\s+|^)while\s+/) { 
@@ -97,7 +96,9 @@ foreach $file (<>) {
 				} elsif ($line =~ /^\s*break\s*$/) { 
 					$line = convertBreak($line);
 					$line .= ";";
-				} 
+				} else { 
+					$line .= ";";
+				}
 				print("$line\n");
 			}
 		}
@@ -132,21 +133,31 @@ sub convertPrint {
 
 sub convertAssignment { 
 	my $letter; 
+	my $reset = 0;
 	my $inQuote = 0;
 	@section = split (" ", $_[0]);
 	foreach $section (@section) { 
+		if ($reset == 1) { 
+			$inQuote = 0; 
+			$reset = 0;
+		}
 		if ($section =~ /[a-z]+/) {  
-				if ($section =~ /\"/ || $section =~ /\'/) {
+				if ($section =~ /\".+\"/ || $section =~ /\'.+\'/) { 
+					$inQuote = 1;
+					$reset = 1;
+				} elsif ($section =~ /\"/ || $section =~ /\'/) {
 					$inQuote = !$inQuote;
-				} if ($inQuote == 0) {
+				} elsif ($inQuote == 0) {
 					$section = "\$$section";
 					$section =~ s/(^\s*)//;
 					$section =~ s/\band\b/\&\&/g; 
 					$section =~ s/\bor\b/\|\|/g; 
 					$section =~ s/\bnot\b/\!\=/g;
 				} 
-			
-		} 
+		} elsif ($section =~ /\+/ && $inQuote == 1) { 
+			$section = '.';
+		}
+
 		$letter .= " ";
 		$letter .= $section;
 	}
@@ -183,6 +194,7 @@ sub printIndentation {
 
 sub convertWhile { 
 	$section = convertAssignment($_[0]);
+	$section = convertReassignment($section);
 	@words = split (" ", $section,);
 	$name = "$words[1] $words[2] $words[3]";
 	$words = "while \($name\) \{";
@@ -191,14 +203,23 @@ sub convertWhile {
 
 sub convertIf { 
 	$section = convertAssignment($_[0]);
-	$section =~ s/\$if//; 
-	$section =~ s/\$&&/&&/; 
+	$section = convertReassignment($section);
 	$words = "if \($section\) \{";
 	return $words; 
 }
 
+sub convertReassignment { 
+	$section = $_[0];
+	$section =~ s/\$if//; 
+	$section =~ s/\$\&\&/&&/; 
+	$section =~ s/\$\|\|/||/; 
+	$section =~ s/\$\!\=/!=/; 
+	return $section;
+}
+
 sub convertElif { 
 	$section = convertAssignment($_[0]);
+	$section = convertReassignment($section);
 	@words = split ("elif", $section);
 	$name = $words[1];
 	$words = "elsif \($name\) \{";
@@ -218,8 +239,9 @@ sub convertFor {
 
 sub convertWrite {
 	$section = convertAssignment($_[0]);
-	@words = split ("\"", $section);
-	$words = "print \"$words[1]\"";
+	$section =~ s/sys.stdout.write//;
+	$section =~ s/\$\(/\(/;
+	$words = "print $section";
 	return $words;
 }	
 
